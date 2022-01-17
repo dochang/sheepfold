@@ -1,7 +1,7 @@
 (define-module (sheepfold packages image-viewers)
   #:use-module (guix packages)
   #:use-module (guix git-download)
-  #:use-module (guix build-system trivial))
+  #:use-module (guix build-system copy))
 
 (define-public nsxiv-extra
   (let ((commit "af05da591727f80d52525d987e1d9894eae8754e")
@@ -17,29 +17,16 @@
                 (file-name (git-file-name name version))
                 (sha256
                  (base32 "0kaxprbi86xl6j9rxwpg1ag9wk6rkvndwdk9237b87na5q224zlm"))))
-      (build-system trivial-build-system)
+      (build-system copy-build-system)
       (arguments
-       `(#:modules ((guix build utils))
-         #:builder
-         (begin
-           (use-modules (guix build utils)
-                        (ice-9 ftw))
-           (let* ((scripts-dir (string-append (assoc-ref %build-inputs "source")
-                                              "/scripts"))
-                  (out (assoc-ref %outputs "out"))
-                  (bin (string-append out "/bin"))
-                  (doc-root (string-append out "/share/doc/nsxiv-extra")))
-             (with-directory-excursion scripts-dir
-               (for-each (lambda (d)
-                           (with-directory-excursion d
-                             (install-file d bin)
-                             (let ((doc (string-append doc-root "/" d)))
-                               (install-file "README.md" doc))))
-                         (scandir "."
-                                  (lambda (fname)
-                                    (not (or (string= fname ".")
-                                             (string= fname ".."))))))))
-           #t)))
+       `(#:install-plan
+         '(,@(apply append
+                    (map (lambda (script)
+                           (list
+                            (list (simple-format #f "scripts/~A/~A" script script) "bin/")
+                            (list (simple-format #f "scripts/~A/README.md" script)
+                                  (simple-format #f "share/doc/nsxiv-extra/~A/" script))))
+                         '("nsxiv-env" "nsxiv-pipe" "nsxiv-rifle" "nsxiv-saver" "nsxiv-thumb" "nsxiv-url"))))))
       (home-page "https://github.com/nsxiv/nsxiv-extra")
       (synopsis "Extra scripts for nsxiv")
       (description "This package provides scripts which add new and commonly

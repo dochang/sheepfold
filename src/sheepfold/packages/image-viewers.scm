@@ -4,8 +4,8 @@
   #:use-module (guix build-system copy))
 
 (define-public nsxiv-extra
-  (let ((commit "af05da591727f80d52525d987e1d9894eae8754e")
-        (revision "0"))
+  (let ((commit "ad39c6be5e8041f069f19838dc0ee481dd2e650e")
+        (revision "1"))
     (package
       (name "nsxiv-extra")
       (version (git-version "0" revision commit))
@@ -16,7 +16,7 @@
                       (commit commit)))
                 (file-name (git-file-name name version))
                 (sha256
-                 (base32 "0kaxprbi86xl6j9rxwpg1ag9wk6rkvndwdk9237b87na5q224zlm"))))
+                 (base32 "089i64a6d1sgwhij06vdlqc1aby7l8rkjr1i2w0dihi5s340lbfy"))))
       (build-system copy-build-system)
       (arguments
        `(#:install-plan

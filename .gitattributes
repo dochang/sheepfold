@@ -80,3 +80,10 @@
 .gitattributes export-ignore
 .gitignore     export-ignore
 .gitkeep       export-ignore
+
+# Local settings
+
+# Scheme
+*.scm       diff=scheme
+*.scm.in    diff=scheme
+*.texi      diff=texinfo

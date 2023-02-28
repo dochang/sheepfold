@@ -1,0 +1,64 @@
+name: CI
+on:
+  - push
+jobs:
+  Mega-Linter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      # Mega-Linter
+      - name: Mega-Linter
+        id: ml
+        # You can override Mega-Linter flavor used to have faster performances
+        # More info at https://oxsecurity.github.io/megalinter/flavors/
+        uses: oxsecurity/megalinter@v6
+        env:
+          # All available variables are described in documentation
+          # https://oxsecurity.github.io/megalinter/configuration/
+          VALIDATE_ALL_CODEBASE: true
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BASH_SHELLCHECK_ARGUMENTS: "--source-path=/github/workspace"
+          # See `.mega-linter.yml`.
+
+      # Upload Mega-Linter artifacts
+      - name: Archive production artifacts
+        if: ${{ success() }} || ${{ failure() }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: Mega-Linter reports
+          path: |
+            megalinter-reports
+            mega-linter.log
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Guix cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/guix
+          # use a key that (almost) never matches
+          key: guix-cache-${{ github.sha }}
+          restore-keys: |
+            guix-cache-
+
+      - name: Install Guix
+        uses: PromyLOPh/guix-install-action@v1
+
+      - name: Lint
+        run: make lint
+        env:
+          TMPDIR: "${{ runner.temp }}"
+
+      - name: Build
+        run: make build
+        env:
+          TMPDIR: "${{ runner.temp }}"
+
+      - name: Test
+        run: make test
+        env:
+          TMPDIR: "${{ runner.temp }}"

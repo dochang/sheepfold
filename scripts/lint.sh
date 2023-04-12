@@ -8,9 +8,10 @@ script_dir="$(dirname "$0")"
 # shellcheck source=scripts/bootstrap-profile.sh
 . "$script_dir/common.sh"
 
-guix_lint_cmd="guix lint $SHEEPFOLD_GUIX_OPTS --exclude=refresh"
-# Exclude `refresh` checker because it cannot find update for some git
-# upstreams.
+guix_lint_cmd="guix lint $SHEEPFOLD_GUIX_OPTS --exclude=refresh,archival"
+# Exclude `refresh` because it cannot find update for some git upstreams.
+#
+# Exclude `archival` because it displays annoying message for some packages.
 
 echo "Lint packages in profile $GUIX_PROFILE" >&2
 

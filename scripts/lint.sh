@@ -25,7 +25,8 @@ lint_msg="$("$script_dir/pkgnames.sh" "$@" | xargs --no-run-if-empty $guix_lint_
 echo "$lint_msg" >&2
 
 exclude_file="$script_dir/lint-message-exclude-patterns"
+err_msg="$(echo "$lint_msg" | grep -v -f "$exclude_file" || true)"
 
-if echo "$lint_msg" | grep -vq -f "$exclude_file"; then
+if [ -n "$err_msg" ]; then
     exit 1
 fi

@@ -24,7 +24,8 @@
              ;; No need to use `with-imported-modules' because `(srfi srfi-1)'
              ;; and `(ice-9 ftw)' are both Guile internal modules.
              #~(begin
-                 (use-modules (srfi srfi-1))
+                 (use-modules (srfi srfi-1)
+                              (ice-9 ftw))
                  (append-map
                   (lambda (script)
                     (let* ((src (string-append "scripts/" script "/"))
@@ -34,15 +35,10 @@
                       (list
                        (list (string-append src script) "bin/")
                        (list (string-append src "README.md") doc))))
-                  '("nsxiv-anti-alias"
-                    "nsxiv-env"
-                    "nsxiv-fill"
-                    "nsxiv-open"
-                    "nsxiv-pipe"
-                    "nsxiv-rifle"
-                    "nsxiv-saver"
-                    "nsxiv-thumb"
-                    "nsxiv-url")))))
+                  (scandir (string-append #$source "/scripts")
+                           (let ((rx (make-regexp "^nsxiv-.*")))
+                             (lambda (fname)
+                               (regexp-exec rx fname))))))))
       (home-page "https://codeberg.org/nsxiv/nsxiv-extra")
       (synopsis "Extra scripts for nsxiv")
       (description "This package provides scripts which add new and commonly

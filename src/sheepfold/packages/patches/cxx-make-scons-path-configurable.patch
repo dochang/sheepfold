@@ -1,0 +1,193 @@
+From d975cfb56f614e9dcf77bc62b93830ba691b687d Mon Sep 17 00:00:00 2001
+From: Wade Zhang <dochang@gmail.com>
+Date: Mon, 1 May 2023 11:48:59 +0800
+Subject: [PATCH] Make scons path configurable
+
+---
+ Makefile        |  9 +++++---
+ src/Makefile.in | 55 +++++++++++++++++++++++++------------------------
+ 2 files changed, 34 insertions(+), 30 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index 7494e21..7418794 100644
+--- a/Makefile
++++ b/Makefile
+@@ -13,12 +13,15 @@ UNAME_S := $(shell uname -s)
+ ifeq ($(UNAME_S),Darwin)
+   PREFIX ?= /usr/local
+   MAKE ?= make
++  SCONS ?= scons
+ else ifeq ($(UNAME_S),FreeBSD)
+   PREFIX ?= /usr/local
+   MAKE ?= gmake
++  SCONS ?= scons
+ else
+   PREFIX ?= /usr
+   MAKE ?= make
++  SCONS ?= scons
+ endif
+ 
+ VERSION := $(shell grep -F '* Version: ' README.md | cut -d' ' -f3)
+@@ -33,10 +36,10 @@ endif
+ generate: src/Makefile src/cxx
+ 
+ src/Makefile: src/Makefile.in
+-	@sed "s,@@PREFIX@@,${PREFIX},g;s,@@MAKE@@,${MAKE},g;s,@@VERSION@@,${VERSION},g" "${ROOTDIR}/$<" > "${ROOTDIR}/$@"
++	@sed "s,@@PREFIX@@,${PREFIX},g;s,@@MAKE@@,${MAKE},g;s,@@SCONS@@,${SCONS},g;s,@@VERSION@@,${VERSION},g" "${ROOTDIR}/$<" > "${ROOTDIR}/$@"
+ 
+ src/cxx: src/cxx.in
+-	@sed "s,@@PREFIX@@,${PREFIX},g;s,@@MAKE@@,${MAKE},g;s,@@VERSION@@,${VERSION},g" "${ROOTDIR}/$<" > "${ROOTDIR}/$@"
++	@sed "s,@@PREFIX@@,${PREFIX},g;s,@@MAKE@@,${MAKE},g;s,@@SCONS@@,${SCONS},g;s,@@VERSION@@,${VERSION},g" "${ROOTDIR}/$<" > "${ROOTDIR}/$@"
+ 
+ install: scons generate
+ 	@install -d "${DESTDIR}${PREFIX}/bin"
+@@ -49,7 +52,7 @@ install: scons generate
+ 	@install -m644 "${ROOTDIR}/LICENSE" "${DESTDIR}${PREFIX}/share/licenses/${NAME}/LICENSE" || true
+ 
+ scons:
+-	@scons --version 2>/dev/null 1>/dev/null || (echo 'please install scons'; exit 1)
++	@${SCONS} --version 2>/dev/null 1>/dev/null || (echo 'please install scons'; exit 1)
+ 
+ uninstall:
+ 	@-rm -f "${DESTDIR}${PREFIX}/bin/${NAME}"
+diff --git a/src/Makefile.in b/src/Makefile.in
+index f1cfc3c..6febc89 100644
+--- a/src/Makefile.in
++++ b/src/Makefile.in
+@@ -17,6 +17,7 @@ std ?= c++20
+ MAKE ?= @@MAKE@@
+ PREFIX ?= @@PREFIX@@
+ system_include_dir ?= ${PREFIX}/include
++SCONS ?= @@SCONS@@
+ 
+ # the name of the installed executable and related directories
+ NAME ?= $(shell basename $(CURDIR))
+@@ -73,90 +74,90 @@ all: build
+ version:
+ 	@echo cxx @@VERSION@@
+ 	@${MAKE} --version | head -1
+-	@echo '   SCons '$$(scons --version | grep ": v" | head -1 | cut -d: -f2 | cut -dv -f2 | cut -b-5)
++	@echo '   SCons '$$(${SCONS} --version | grep ": v" | head -1 | cut -d: -f2 | cut -dv -f2 | cut -b-5)
+ 
+ build:
+-	@scons ${SCONSFILEARG} -Q ${CMD} clang=${clang} zap=${zap} win64=${win64} strict=${strict} debug=${debug} opt=${opt} rec=${rec} sloppy=${sloppy} std=${std} CXX="${CXX}" CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
++	@${SCONS} ${SCONSFILEARG} -Q ${CMD} clang=${clang} zap=${zap} win64=${win64} strict=${strict} debug=${debug} opt=${opt} rec=${rec} sloppy=${sloppy} std=${std} CXX="${CXX}" CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
+ 
+ opt:
+-	@scons ${SCONSFILEARG} -Q ${CMD} opt=1 clang=${clang} zap=${zap} win64=${win64} std=${std} CXX="${CXX}" CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
++	@${SCONS} ${SCONSFILEARG} -Q ${CMD} opt=1 clang=${clang} zap=${zap} win64=${win64} std=${std} CXX="${CXX}" CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
+ 
+ rec: clean
+-	@scons ${SCONSFILEARG} -Q run clang=${clang} zap=${zap} win64=${win64} strict=${strict} debug=${debug} opt=${opt} rec=1 sloppy=${sloppy} std=${std} CXX="${CXX}" CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} run=1 args="${RUN_ARGS} $(strip $(subst --,,$(subst --no-print-directory,,${MAKEFLAGS})))" | sed 's/^scons: //g' | uniq
++	@${SCONS} ${SCONSFILEARG} -Q run clang=${clang} zap=${zap} win64=${win64} strict=${strict} debug=${debug} opt=${opt} rec=1 sloppy=${sloppy} std=${std} CXX="${CXX}" CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} run=1 args="${RUN_ARGS} $(strip $(subst --,,$(subst --no-print-directory,,${MAKEFLAGS})))" | sed 's/^scons: //g' | uniq
+ 
+ small:
+-	@scons ${SCONSFILEARG} -Q ${CMD} small=1 clang=${clang} zap=${zap} win64=${win64} std=${std} CXX="${CXX}" CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
++	@${SCONS} ${SCONSFILEARG} -Q ${CMD} small=1 clang=${clang} zap=${zap} win64=${win64} std=${std} CXX="${CXX}" CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
+ 
+ tiny:
+-	@scons ${SCONSFILEARG} -Q ${CMD} small=1 tiny=1 clang=${clang} zap=${zap} win64=${win64} std=${std} CXX="${CXX}" CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
++	@${SCONS} ${SCONSFILEARG} -Q ${CMD} small=1 tiny=1 clang=${clang} zap=${zap} win64=${win64} std=${std} CXX="${CXX}" CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
+ 	@sstrip ${NAME} && echo sstrip ${NAME} || true
+ 	@upx -q --brute ${NAME} 1>/dev/null 2>/dev/null && (echo upx --brute ${NAME}; sstrip ${NAME}) || true
+ 
+ tinywin:
+-	@scons ${SCONSFILEARG} -Q ${CMD} small=1 tiny=1 clang=${clang} zap=${zap} win64=1 std=${std} CXX="${CXX}" CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
++	@${SCONS} ${SCONSFILEARG} -Q ${CMD} small=1 tiny=1 clang=${clang} zap=${zap} win64=1 std=${std} CXX="${CXX}" CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
+ 
+ smallwin:
+-	@scons ${SCONSFILEARG} -Q ${CMD} small=1 tiny=0 clang=${clang} zap=${zap} win64=1 std=${std} CXX="${CXX}" CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
++	@${SCONS} ${SCONSFILEARG} -Q ${CMD} small=1 tiny=0 clang=${clang} zap=${zap} win64=1 std=${std} CXX="${CXX}" CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
+ 
+ win:
+-	@scons ${SCONSFILEARG} -Q ${CMD} small=0 tiny=0 clang=${clang} zap=${zap} win64=1 std=${std} CXX="${CXX}" CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
++	@${SCONS} ${SCONSFILEARG} -Q ${CMD} small=0 tiny=0 clang=${clang} zap=${zap} win64=1 std=${std} CXX="${CXX}" CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
+ 
+ strict:
+-	@scons ${SCONSFILEARG} -Q ${CMD} strict=1 clang=${clang} zap=${zap} win64=${win64} std=${std} CXX="${CXX}" CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
++	@${SCONS} ${SCONSFILEARG} -Q ${CMD} strict=1 clang=${clang} zap=${zap} win64=${win64} std=${std} CXX="${CXX}" CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
+ 
+ sloppy:
+-	@scons ${SCONSFILEARG} -Q ${CMD} sloppy=1 clang=${clang} zap=${zap} win64=${win64} std=${std} CXX="${CXX}" CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
++	@${SCONS} ${SCONSFILEARG} -Q ${CMD} sloppy=1 clang=${clang} zap=${zap} win64=${win64} std=${std} CXX="${CXX}" CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
+ 
+ testbuild:
+-	@scons ${SCONSFILEARG} -Q ${CMD} clang=${clang} zap=${zap} win64=${win64} strict=${strict} debug=${debug} opt=${opt} rec=${rec} sloppy=${sloppy} std=${std} CXX="${CXX}" CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
++	@${SCONS} ${SCONSFILEARG} -Q ${CMD} clang=${clang} zap=${zap} win64=${win64} strict=${strict} debug=${debug} opt=${opt} rec=${rec} sloppy=${sloppy} std=${std} CXX="${CXX}" CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
+ 
+ test:
+-	@scons ${SCONSFILEARG} -Q test clang=${clang} zap=${zap} win64=${win64} strict=${strict} debug=${debug} opt=${opt} rec=${rec} sloppy=${sloppy} std=${std} CXX="${CXX}" CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
++	@${SCONS} ${SCONSFILEARG} -Q test clang=${clang} zap=${zap} win64=${win64} strict=${strict} debug=${debug} opt=${opt} rec=${rec} sloppy=${sloppy} std=${std} CXX="${CXX}" CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
+ 
+ pro:
+-	@scons ${SCONSFILEARG} -Q pro clang=${clang} zap=${zap} win64=${win64} strict=${strict} debug=${debug} opt=${opt} rec=${rec} sloppy=${sloppy} std=${std} CXX="${CXX}" CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
++	@${SCONS} ${SCONSFILEARG} -Q pro clang=${clang} zap=${zap} win64=${win64} strict=${strict} debug=${debug} opt=${opt} rec=${rec} sloppy=${sloppy} std=${std} CXX="${CXX}" CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
+ 
+ cmake:
+-	@scons ${SCONSFILEARG} -Q cmake clang=${clang} zap=${zap} win64=${win64} strict=${strict} debug=${debug} opt=${opt} rec=${rec} sloppy=${sloppy} std=${std} CXX="${CXX}" CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
++	@${SCONS} ${SCONSFILEARG} -Q cmake clang=${clang} zap=${zap} win64=${win64} strict=${strict} debug=${debug} opt=${opt} rec=${rec} sloppy=${sloppy} std=${std} CXX="${CXX}" CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
+ 
+ clang:
+-	@scons ${SCONSFILEARG} -Q ${CMD} clang=1 std=${std} CXX=clang++ CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
++	@${SCONS} ${SCONSFILEARG} -Q ${CMD} clang=1 std=${std} CXX=clang++ CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
+ 
+ zap:
+-	@scons ${SCONSFILEARG} -Q ${CMD} zap=1 std=${std} CXX=zapcc++ std=c++14 CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
++	@${SCONS} ${SCONSFILEARG} -Q ${CMD} zap=1 std=${std} CXX=zapcc++ std=c++14 CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
+ 
+ clangstrict:
+-	@scons ${SCONSFILEARG} -Q ${CMD} clang=1 strict=1 std=${std} CXX=clang++ CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
++	@${SCONS} ${SCONSFILEARG} -Q ${CMD} clang=1 strict=1 std=${std} CXX=clang++ CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
+ 
+ clangsloppy:
+-	@scons ${SCONSFILEARG} -Q ${CMD} clang=1 sloppy=1 std=${std} CXX=clang++ CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
++	@${SCONS} ${SCONSFILEARG} -Q ${CMD} clang=1 sloppy=1 std=${std} CXX=clang++ CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
+ 
+ clangdebug:
+-	@scons ${SCONSFILEARG} -Q ${CMD} clang=1 debug=1 std=${std} CXX=clang++ CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
++	@${SCONS} ${SCONSFILEARG} -Q ${CMD} clang=1 debug=1 std=${std} CXX=clang++ CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
+ 	ASAN_OPTIONS=detect_leaks=0 lldb "${NAME}"
+ 
+ clangtest:
+-	@scons ${SCONSFILEARG} -Q test clang=1 win64=${win64} strict=${strict} debug=${debug} opt=${opt} rec=${rec} sloppy=${sloppy} std=${std} CXX=clang++ CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
++	@${SCONS} ${SCONSFILEARG} -Q test clang=1 win64=${win64} strict=${strict} debug=${debug} opt=${opt} rec=${rec} sloppy=${sloppy} std=${std} CXX=clang++ CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
+ 
+ clangrebuild: clean clang
+ 
+ debugbuild:
+-	@scons ${SCONSFILEARG} -Q ${CMD} debug=1 clang=${clang} zap=${zap} win64=${win64} std=${std} CXX="${CXX}" CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
++	@${SCONS} ${SCONSFILEARG} -Q ${CMD} debug=1 clang=${clang} zap=${zap} win64=${win64} std=${std} CXX="${CXX}" CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
+ 
+ debugnosan:
+-	@scons ${SCONSFILEARG} -Q ${CMD} debug=1 nosan=1 clang=${clang} zap=${zap} win64=${win64} std=${std} CXX="${CXX}" CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
++	@${SCONS} ${SCONSFILEARG} -Q ${CMD} debug=1 nosan=1 clang=${clang} zap=${zap} win64=${win64} std=${std} CXX="${CXX}" CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
+ 
+ debug:
+-	@scons ${SCONSFILEARG} -Q ${CMD} debug=1 clang=${clang} zap=${zap} win64=${win64} std=${std} CXX="${CXX}" CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
++	@${SCONS} ${SCONSFILEARG} -Q ${CMD} debug=1 clang=${clang} zap=${zap} win64=${win64} std=${std} CXX="${CXX}" CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} | sed 's/^scons: //g' | uniq
+ 	ASAN_OPTIONS=detect_leaks=0 cgdb "${NAME}" || ASAN_OPTIONS=detect_leaks=0 gdb "${NAME}"
+ 
+ run:
+-	@scons ${SCONSFILEARG} -Q run clang=${clang} zap=${zap} win64=${win64} strict=${strict} debug=${debug} opt=${opt} rec=${rec} sloppy=${sloppy} std=${std} CXX="${CXX}" CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} run=1 args="${RUN_ARGS} $(strip $(subst --,,$(subst --no-print-directory,,${MAKEFLAGS})))" | sed 's/^scons: //g' | uniq
++	@${SCONS} ${SCONSFILEARG} -Q run clang=${clang} zap=${zap} win64=${win64} strict=${strict} debug=${debug} opt=${opt} rec=${rec} sloppy=${sloppy} std=${std} CXX="${CXX}" CXXFLAGS="${CXXFLAGS}" system_include_dir=${system_include_dir} run=1 args="${RUN_ARGS} $(strip $(subst --,,$(subst --no-print-directory,,${MAKEFLAGS})))" | sed 's/^scons: //g' | uniq
+ 
+ rebuild: clean build
+ 
+ main: $(wildcard main.c*)
+-	@scons ${SCONSFILEARG} -Q clang=${clang} zap=${zap} win64=${win64} strict=${strict} debug=${debug} opt=${opt} rec=${rec} sloppy=${sloppy} std=${std} CXX="${CXX}" CXXFLAGS="${CXXFLAGS}" system_include_dir="${system_include_dir}" imgdir="${PREFIX}/share/${NAME}/img" datadir="${PREFIX}/share/${NAME}/data" shaderdir="${PREFIX}/share/${NAME}/shaders" sharedir="${PREFIX}/share/${NAME}" resourcedir="${PREFIX}/share/${NAME}/resources" resdir="${PREFIX}/share/${NAME}/res" scriptdir="${PREFIX}/share/${NAME}/scripts" | sed 's/^scons: //g' | uniq
++	@${SCONS} ${SCONSFILEARG} -Q clang=${clang} zap=${zap} win64=${win64} strict=${strict} debug=${debug} opt=${opt} rec=${rec} sloppy=${sloppy} std=${std} CXX="${CXX}" CXXFLAGS="${CXXFLAGS}" system_include_dir="${system_include_dir}" imgdir="${PREFIX}/share/${NAME}/img" datadir="${PREFIX}/share/${NAME}/data" shaderdir="${PREFIX}/share/${NAME}/shaders" sharedir="${PREFIX}/share/${NAME}" resourcedir="${PREFIX}/share/${NAME}/resources" resdir="${PREFIX}/share/${NAME}/res" scriptdir="${PREFIX}/share/${NAME}/scripts" | sed 's/^scons: //g' | uniq
+ 
+ # Change the img, data or resource paths in main.cpp, main.cc or main.cxx to point to the system directories before compiling and installing on the system
+ #
+@@ -273,7 +274,7 @@ export:
+ 	@cp -i -v "${ROOTDIR}/build.py" build.py
+ 
+ clean:
+-	@scons ${SCONSFILEARG} -Q clean win64=${win64} | sed 's/^scons: //g' | uniq
++	@${SCONS} ${SCONSFILEARG} -Q clean win64=${win64} | sed 's/^scons: //g' | uniq
+ 	@-rm -vf callgrind.out.*
+ 
+ # fastclean only removes the executable and *.o
+-- 
+2.39.2
+

@@ -8,10 +8,16 @@ script_dir="$(dirname "$0")"
 # shellcheck source=scripts/bootstrap-profile.sh
 . "$script_dir/common.sh"
 
-guix_lint_cmd="guix lint $SHEEPFOLD_GUIX_OPTS --exclude=refresh,archival"
+guix_lint_cmd="guix lint $SHEEPFOLD_GUIX_OPTS --exclude=refresh,archival,input-labels"
 # Exclude `refresh` because it cannot find update for some git upstreams.
 #
 # Exclude `archival` because it displays annoying message for some packages.
+#
+# Exclude `input-labels` because it doesn't support inputs with outputs.  See
+# [1] & [2] for details.
+#
+# [1]: https://guix.gnu.org/en/manual/devel/en/html_node/package-Reference.html#index-inputs_002c-of-packages
+# [2]: https://git.savannah.gnu.org/cgit/guix.git/tree/guix/lint.scm?id=b7e77446261fdc8dab360d7835a5dec919f6a79f#n546
 
 echo "Lint packages in profile $GUIX_PROFILE" >&2
 

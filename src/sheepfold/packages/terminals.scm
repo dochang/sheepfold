@@ -11,6 +11,12 @@
   #:use-module (guix gexp)
   #:use-module (guix utils)
   #:use-module (gnu packages gperf)
+  #:use-module (gnu packages autotools)
+  #:use-module (gnu packages base)
+  #:use-module (gnu packages perl)
+  #:use-module (gnu packages version-control)
+  #:use-module (gnu packages compression)
+  #:use-module (gnu packages curl)
   #:use-module ((guix licenses) #:prefix license:))
 
 (define-public pspg
@@ -88,3 +94,56 @@ to clipboard.")
     (synopsis "Man-page inspired Markdown viewer")
     (description "A man-page inspired Markdown pager written in C.")
     (license license:gpl3)))
+
+(define-public termrec
+  (package
+    (name "termrec")
+    (version "0.19")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/kilobyte/termrec")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32 "08jh3xxalid5hak754w5gn2r72gdd0hzlqkybj8ghnh86py9b5m3"))))
+    (build-system gnu-build-system)
+    (inputs
+     (list zlib
+           bzip2
+           xz
+           `(,zstd "lib")
+           curl))
+    (native-inputs
+     (list autoconf
+           automake
+           libtool
+           which
+           perl
+           git))
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'bootstrap 'pre-bootstrap
+            (lambda _
+              (call-with-output-file "VERSION"
+                (lambda (port)
+                  (simple-format port "~A\n" #$version)))
+              (patch-shebang "get_version")))
+          (add-after 'install 'post-install
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let* ((out (assoc-ref outputs "out"))
+                     (doc (simple-format #f "~A/share/doc/~A/"
+                                         out (strip-store-file-name out))))
+                (for-each
+                 (lambda (f)
+                   (install-file f doc))
+                 '("README" "INSTALL" "BUGS" "ChangeLog"))))))))
+    (home-page "https://angband.pl/termrec.html")
+    (synopsis "TTY recorder/player")
+    (description "Termrec is a tty recorder; it can record the output of any
+text mode program which you can then replay with @command{termplay},
+@command{ttyplay}, @command{ipbt}, @command{ttyplayer}, @command{nh-recorder},
+@command{asciinema} or similar.")
+    (license license:lgpl3)))

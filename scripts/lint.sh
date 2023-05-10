@@ -22,8 +22,11 @@ echo "Lint packages in profile $GUIX_PROFILE" >&2
 
 # shellcheck disable=SC2086
 lint_msg="$("$script_dir/pkgnames.sh" "$@" | xargs --no-run-if-empty $guix_lint_cmd 2>&1)"
+echo "$lint_msg" >&2
 
-if echo "$lint_msg" | grep -v '^$' | grep -vq "fetching CVE database for"; then
-    echo "$lint_msg"
+exclude_file="$script_dir/lint-message-exclude-patterns"
+err_msg="$(echo "$lint_msg" | grep -v -f "$exclude_file" || true)"
+
+if [ -n "$err_msg" ]; then
     exit 1
 fi

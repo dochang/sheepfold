@@ -24,7 +24,7 @@
               (sha256
                (base32 "0wlmkhdd95yhrnapln5hxd8a82h55i2c43v45mj0rnp7kahd872p"))))
     (build-system font-build-system)
-    (home-page "http://fonts.jp/hanazono/")
+    (home-page "https://glyphwiki.org/hanazono/")
     (synopsis "Japanese TrueType mincho font by KAGE system and FontForge")
     (description "This font is Japanese KANJI free font.  The KAGE system and
 FontForge are used for the generation of this font.  Collected glyph uses all

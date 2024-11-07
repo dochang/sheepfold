@@ -24,7 +24,7 @@
                (base32 "0ki3d8k4pa3wimn2027qi1pp763m4q2icx6fy5dqn2jf7c8whl1s"))))
     (build-system trivial-build-system)
     (inputs
-     (list bash
+     (list bash-minimal
            coreutils
            xxd
            util-linux ;; For `blockdev', `lsblk', `umount'

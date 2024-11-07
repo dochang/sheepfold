@@ -42,7 +42,7 @@
       #:make-flags
       #~(list (string-append "PREFIX=" %output)
               (string-append "CC=" #$(cc-for-target)))
-      #:modules `(,@%gnu-build-system-modules
+      #:modules `(,@%default-gnu-imported-modules
                   (ice-9 match))
       #:phases
       #~(modify-phases %standard-phases

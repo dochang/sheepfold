@@ -17,8 +17,27 @@ jobs:
             sh /entrypoint.sh
       - store_artifacts:
           path: megalinter-reports
+  test:
+    docker:
+      - image: cimg/base:current
+    steps:
+      - checkout
+      - run:
+          command: |
+            echo 11111111111111111111
+            who
+            echo "aa $USER bb"
+            echo $UID
+            GUIX_TEMP_DIR=$(mktemp -d)
+            INSTALLER="$GUIX_TEMP_DIR/guix-install.sh"
+            curl -o "$INSTALLER" https://git.savannah.gnu.org/cgit/guix.git/plain/etc/guix-install.sh
+            chmod +x "$INSTALLER"
+            "$INSTALLER"
+            command -v guix
+            guix install hello
 
 workflows:
   CI:
     jobs:
       - Mega-Linter
+      - test

@@ -22,6 +22,9 @@ jobs:
       image: ubuntu-2404:current
     steps:
       - checkout
+      - restore_cache:
+          keys:
+            - &guix-cache-key v1-guix-
       - run:
           command: |
             echo 11111111111111111111
@@ -38,6 +41,10 @@ jobs:
             guix package --upgrade
             . $HOME/.guix-profile/etc/profile
             make lint build test
+      - save_cache:
+          key: *guix-cache-key
+          paths:
+            - "~/.cache/guix"
 
 workflows:
   CI:

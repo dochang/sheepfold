@@ -33,11 +33,11 @@ jobs:
             head ./scripts/setup-guix.sh
             sudo sh "./scripts/setup-guix.sh"
             ps -ef | grep guix
-            # ls -lA $HOME/.guix-profile
             guix pull
             guix install glibc-locales
+            guix package --upgrade
             . $HOME/.guix-profile/etc/profile
-            guix install hello
+            make lint build test
 
 workflows:
   CI:

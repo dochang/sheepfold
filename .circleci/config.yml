@@ -18,8 +18,8 @@ jobs:
       - store_artifacts:
           path: megalinter-reports
   test:
-    docker:
-      - image: cimg/base:current
+    machine:
+      image: ubuntu-2404:current
     steps:
       - checkout
       - run:

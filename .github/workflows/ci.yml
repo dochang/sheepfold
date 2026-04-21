@@ -65,7 +65,7 @@ jobs:
             guix-cache-
 
       - name: Install Guix
-        uses: PromyLOPh/guix-install-action@v1
+        uses: PromyLOPh/guix-install-action@v1.6
 
       - name: Lint
         run: make lint
